@@ -75,7 +75,7 @@ public class AuthService
         {
             Id = Guid.NewGuid(),
             ProviderId = provider.Id,
-            PlanId = plan?.Id ?? Guid.Empty,
+            PlanId = plan?.Id ?? SubscriptionPlan.StandardPlanId,
             Gateway = PaymentGatewayType.Stripe,
             Status = SubscriptionStatus.Trialing,
             CurrentPeriodEnd = now.Add(TrialLength)
