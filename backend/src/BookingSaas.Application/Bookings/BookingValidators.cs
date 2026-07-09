@@ -13,6 +13,6 @@ public class CreatePublicBookingRequestValidator : AbstractValidator<CreatePubli
         RuleFor(x => x.ClientEmail).NotEmpty().EmailAddress();
         RuleFor(x => x.ClientPhone).MaximumLength(30);
         RuleFor(x => x.Notes).MaximumLength(1000);
-        RuleFor(x => x.Gateway).IsInEnum();
+        RuleFor(x => x.Gateway!.Value).IsInEnum().When(x => x.Gateway is not null);
     }
 }

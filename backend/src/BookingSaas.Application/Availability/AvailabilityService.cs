@@ -52,6 +52,21 @@ public class AvailabilityService
         return created.Select(w => new WorkingHoursDto(w.Id, w.DayOfWeek, w.StartTime, w.EndTime, w.IsClosed)).ToList();
     }
 
+    /// <summary>GET /timeoff. Not explicitly listed in ARCHITECTURE.md's endpoint table (only
+    /// POST /timeoff and DELETE /timeoff/{id} are), but the dashboard needs a way to list a
+    /// provider's time-off entries, and the apps/web frontend independently expects this route.
+    /// See README "Design notes".</summary>
+    public async Task<IReadOnlyList<TimeOffDto>> ListTimeOffAsync(CancellationToken ct = default)
+    {
+        _currentUser.EnsureProvider();
+        var providerId = _currentUser.ProviderId!.Value;
+        return await _db.TimeOffs
+            .Where(t => t.ProviderId == providerId)
+            .OrderBy(t => t.StartAt)
+            .Select(t => new TimeOffDto(t.Id, t.StartAt, t.EndAt, t.Reason))
+            .ToListAsync(ct);
+    }
+
     public async Task<TimeOffDto> CreateTimeOffAsync(CreateTimeOffRequest request, CancellationToken ct = default)
     {
         _currentUser.EnsureProvider();
@@ -105,7 +120,11 @@ public class AvailabilityService
         if (workingHours is null || workingHours.IsClosed)
             return Array.Empty<TimeSlotDto>();
 
-        var dayStart = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
+        // DateOnly.ToDateTime(TimeOnly) has no DateTimeKind overload; it returns Kind=Unspecified.
+        // That's fine here - all comparisons below are against other Kind=Unspecified/Utc DateTime
+        // values from the same "always store UTC" convention, and DateTime comparison operators
+        // compare ticks only, ignoring Kind.
+        var dayStart = date.ToDateTime(TimeOnly.MinValue);
         var dayEnd = dayStart.AddDays(1);
 
         var timeOffs = await _db.TimeOffs

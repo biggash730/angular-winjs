@@ -48,6 +48,7 @@ public class BookingService
             throw new ConflictException("This time slot is no longer available.");
 
         var depositAmount = Math.Round(service.Price * service.DepositPercentage / 100m, 2, MidpointRounding.AwayFromZero);
+        var gatewayType = request.Gateway ?? PaymentGatewayType.Stripe;
 
         var booking = new Booking
         {
@@ -74,10 +75,10 @@ public class BookingService
             booking.Status = BookingStatus.Confirmed;
             booking.DepositPaid = true;
             await _db.SaveChangesAsync(ct);
-            return new CreatePublicBookingResponse(booking.Id, 0m, "usd", request.Gateway, null, null, null, null, null);
+            return new CreatePublicBookingResponse(booking.Id, 0m, "usd", gatewayType, null, null, null, null, null);
         }
 
-        var gateway = ResolveGateway(request.Gateway);
+        var gateway = ResolveGateway(gatewayType);
         var initResult = await gateway.InitiateDepositAsync(booking, depositAmount, "usd", ct);
 
         _db.Payments.Add(new Payment
@@ -86,7 +87,7 @@ public class BookingService
             BookingId = booking.Id,
             ProviderId = provider.Id,
             Purpose = PaymentPurpose.BookingDeposit,
-            Gateway = request.Gateway,
+            Gateway = gatewayType,
             GatewayReference = initResult.GatewayReference,
             Amount = depositAmount,
             Currency = "usd",
@@ -97,7 +98,7 @@ public class BookingService
         await _db.SaveChangesAsync(ct);
 
         return new CreatePublicBookingResponse(
-            booking.Id, depositAmount, "usd", request.Gateway,
+            booking.Id, depositAmount, "usd", gatewayType,
             initResult.StripeClientSecret, initResult.StripePublishableKey,
             initResult.PaystackAccessCode, initResult.PaystackPublicKey, initResult.PaystackReference);
     }

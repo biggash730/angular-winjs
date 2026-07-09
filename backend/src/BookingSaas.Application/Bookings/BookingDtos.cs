@@ -6,7 +6,9 @@ namespace BookingSaas.Application.Bookings;
 /// Gateway is not spelled out in ARCHITECTURE.md's field list for POST /public/bookings, but the
 /// response must return a Stripe-shaped or Paystack-shaped payment payload, and "the client picks
 /// a gateway at checkout" (per the tech-stack section) - so the client must tell us which one.
-/// Added as the simplest reasonable resolution; documented in README "Design notes".
+/// Added as an optional field (defaults to Stripe when omitted) as the simplest reasonable
+/// resolution; the apps/web frontend independently made the same addition. Documented in
+/// README "Design notes".
 /// </summary>
 public record CreatePublicBookingRequest(
     string Slug,
@@ -16,7 +18,7 @@ public record CreatePublicBookingRequest(
     string ClientEmail,
     string? ClientPhone,
     string? Notes,
-    PaymentGatewayType Gateway);
+    PaymentGatewayType? Gateway);
 
 public record CreatePublicBookingResponse(
     Guid BookingId,

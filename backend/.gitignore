@@ -1,0 +1,17 @@
+# .NET build artifacts
+bin/
+obj/
+out/
+
+# Rider / VS
+.vs/
+.idea/
+*.user
+*.suo
+
+# User secrets / local overrides
+appsettings.*.local.json
+
+# Test results
+[Tt]est[Rr]esult*/
+*.trx

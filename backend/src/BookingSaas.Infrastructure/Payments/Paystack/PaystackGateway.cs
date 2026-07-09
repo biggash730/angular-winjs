@@ -97,7 +97,6 @@ public class PaystackGateway : IPaymentGateway
                 return new RefundResult(false, null, body);
             }
 
-            var envelope = JsonSerializer.Deserialize<PaystackEnvelope<PaystackRefundData>>(body, JsonOptions);
             return new RefundResult(true, payment.GatewayReference);
         }
         catch (Exception ex) when (ex is HttpRequestException or JsonException)
@@ -107,7 +106,7 @@ public class PaystackGateway : IPaymentGateway
         }
     }
 
-    public async Task<WebhookEvent> ParseWebhookAsync(string rawBody, IReadOnlyDictionary<string, string> headers, CancellationToken ct = default)
+    public Task<WebhookEvent> ParseWebhookAsync(string rawBody, IReadOnlyDictionary<string, string> headers, CancellationToken ct = default)
     {
         if (!TryGetHeader(headers, "x-paystack-signature", out var signature) || !VerifySignature(rawBody, signature))
             throw new BadRequestException("Invalid Paystack webhook signature.");
@@ -120,7 +119,7 @@ public class PaystackGateway : IPaymentGateway
         var bookingId = ParseGuid(GetMetadataString(payload.Data.Metadata, "bookingId"));
         var reference = payload.Data.Reference ?? payload.Data.SubscriptionCode ?? string.Empty;
 
-        return payload.Event switch
+        WebhookEvent result = payload.Event switch
         {
             "charge.success" when purpose == "deposit" => new WebhookEvent(WebhookEventType.DepositSucceeded, reference, bookingId, providerId),
             "charge.success" when purpose == "subscription" => new WebhookEvent(WebhookEventType.SubscriptionActivated, reference, null, providerId),
@@ -129,6 +128,7 @@ public class PaystackGateway : IPaymentGateway
             "subscription.disable" or "subscription.not_renew" => new WebhookEvent(WebhookEventType.SubscriptionCanceled, reference, null, providerId),
             _ => new WebhookEvent(WebhookEventType.Unknown, reference, null, null)
         };
+        return Task.FromResult(result);
     }
 
     private async Task<string> GetOrCreatePlanCodeAsync(CancellationToken ct)
