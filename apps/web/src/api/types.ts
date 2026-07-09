@@ -235,6 +235,8 @@ export interface CreatePublicBookingPayload {
   clientEmail: string
   clientPhone: string
   notes?: string
+  /** Preferred gateway for the deposit payment init payload. */
+  gateway?: PaymentGateway
 }
 
 export interface PaymentInitPayload {

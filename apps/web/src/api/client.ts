@@ -123,9 +123,9 @@ export const api = {
     apiFetch<T>(path, { ...options, method: 'DELETE' }),
 }
 
-export function buildQuery(params: Record<string, string | number | boolean | undefined | null>): string {
+export function buildQuery(params: object): string {
   const search = new URLSearchParams()
-  for (const [key, value] of Object.entries(params)) {
+  for (const [key, value] of Object.entries(params as Record<string, unknown>)) {
     if (value !== undefined && value !== null && value !== '') {
       search.set(key, String(value))
     }

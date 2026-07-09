@@ -1,10 +1,12 @@
 import { api } from './client'
 import type { Service } from './types'
 
-export type CreateServicePayload = Pick<
-  Service,
-  'name' | 'description' | 'durationMinutes' | 'price' | 'depositPercentage' | 'isActive'
->
+export type CreateServicePayload = Omit<
+  Pick<Service, 'name' | 'description' | 'durationMinutes' | 'price' | 'depositPercentage' | 'isActive'>,
+  'description'
+> & {
+  description?: string | null
+}
 
 export type UpdateServicePayload = Partial<CreateServicePayload>
 
